@@ -1,0 +1,31 @@
+name: Build RFPS Portable (Windows x64)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -A x64
+      - name: Build Release
+        run: cmake --build build --config Release --parallel
+      - name: Stage portable package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item build/Release/RFPS.exe dist/RFPS.exe
+          Copy-Item README.md dist/README.txt
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RFPS-Portable-Windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
